@@ -6,9 +6,10 @@ const path = require('path');
 const cron = require('node-cron');
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
-app.use(express.static(__dirname));
+// *** মূল পরিবর্তন: public ফোল্ডারকে স্ট্যাটিক হিসেবে পরিবেশন করা ***
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
 let conversionJobs = {};
@@ -24,17 +25,19 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+// মূল রুট এখন public ফোল্ডারের index.html ফাইলটি দেখাবে
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
-app.post('/upload', upload.array('images'), (req, res) => {
-    if (req.files.length > 5) {
-        req.files.forEach(file => fs.unlinkSync(file.path));
-        return res.status(400).json({ error: 'You cannot upload more than 5 files at a time.' });
+app.post('/upload', upload.array('images', 5), (req, res, next) => {
+    // Multer দিয়ে ফাইল সংখ্যা যাচাই করার জন্য একটি মিডলওয়্যার
+    if (req.files.length === 0) {
+        return res.status(400).json({ error: 'No files were uploaded.' });
     }
-    
-    if (!req.files || req.files.length === 0) {
-        return res.status(400).json({ error: 'No files uploaded.' });
-    }
+    next();
+}, (req, res) => {
+    // req.files এখন নিশ্চিতভাবে আছে
     const jobId = Date.now().toString();
     conversionJobs[jobId] = { total: req.files.length, completed: 0, files: [], error: null };
     res.json({ jobId: jobId });
@@ -53,6 +56,7 @@ app.post('/upload', upload.array('images'), (req, res) => {
         }
     })();
 });
+
 
 function convertFile(file) {
     return new Promise((resolve, reject) => {
