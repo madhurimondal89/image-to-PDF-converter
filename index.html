@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image to PDF Converter - World Class</title>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="converter-container">
+        <img src="https://img.icons8.com/nolan/96/pd-b-2-x.png" alt="App Icon" class="header-icon"/>
+        <h1>Image to PDF Converter</h1>
+        <p class="subtitle">Upload your images and get high-quality PDFs instantly.</p>
+
+        <!-- Upload Form -->
+        <form id="upload-form">
+            <label for="file-upload-input" class="file-upload-wrapper">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p><strong>Click to browse</strong> or drag and drop your files here</p>
+                <p class="upload-limit">You can select a maximum of 5 files at a time.</p>
+            </label>
+            <input type="file" name="images" id="file-upload-input" accept="image/*" multiple>
+        </form>
+
+        <!-- Progress Area -->
+        <div id="progress-area" style="display: none;">
+            <p id="progress-text">Starting conversion...</p>
+            <div class="progress-bar">
+                <div class="progress" id="progress"></div>
+            </div>
+            <p id="current-file-text"></p>
+        </div>
+
+        <!-- Preview Area -->
+        <div class="preview-area" id="preview-area">
+            <!-- JavaScript দিয়ে প্রিভিউ কার্ড তৈরি হবে -->
+        </div>
+    </div>
+
+    <!-- Custom Script -->
+    <script src="script.js"></script>
+</body>
+</html>
