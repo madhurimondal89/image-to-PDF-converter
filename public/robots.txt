@@ -1,0 +1,21 @@
+# Allow all crawlers that respect robots.txt
+User-agent: *
+
+# Allow access to the entire site by default
+Allow: /
+
+# Disallow crawlers from accessing temporary file directories and functional endpoints
+# This is very important for privacy and to prevent indexing of temporary user files.
+Disallow: /uploads/
+Disallow: /output/
+Disallow: /zips/
+
+# Disallow access to functional API routes that don't have content for users
+Disallow: /upload
+Disallow: /conversion-status/
+Disallow: /remove
+Disallow: /download/
+Disallow: /download-zip/
+
+# Point search engines to the location of your sitemap
+Sitemap: https://image-to-pdf.imagecompress.in/sitemap.xml
