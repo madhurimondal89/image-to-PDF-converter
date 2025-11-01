@@ -3,45 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image to PDF Converter - World Class</title>
+
+    <!-- ===== SEO Meta Tags (নতুন যোগ করা হয়েছে) ===== -->
+    <title>Image to PDF Converter - Free & Easy Online Tool</title>
+    <meta name="description" content="Easily convert your images (JPG, PNG, etc.) to high-quality PDF files for free. Our online tool is fast, secure, and requires no registration. Convert and download your PDF in seconds!">
+
+    <!-- Favicon Links -->
+    <link rel="icon" type="image/png" href="/icon.png">
+
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
-    <!-- Custom Stylesheet (এখন এটি একই ফোল্ডারে আছে) -->
+    
+    <!-- Custom Stylesheet -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="converter-container">
-        <!-- স্থানীয় আইকন ব্যবহার করা হচ্ছে -->
-        <img src="icon.png" alt="App Icon" class="header-icon"/>
-        <h1>Image to PDF Converter</h1>
-        <p class="subtitle">Upload your images and get high-quality PDFs instantly.</p>
 
-        <!-- Upload Form -->
-        <form id="upload-form">
-            <label for="file-upload-input" class="file-upload-wrapper">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p><strong>Click to browse</strong> or drag and drop your files here</p>
-                <p class="upload-limit">You can select a maximum of 5 files at a time.</p>
-            </label>
-            <input type="file" name="images" id="file-upload-input" accept="image/*" multiple>
-        </form>
+    <!-- ===== হেডার সেকশন ===== -->
+    <header class="site-header">
+        <div class="header-container">
+            <a href="/" class="logo-link">
+                <img src="logo.png" alt="Site Logo" class="header-logo">
+            </a>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="https://www.imagecompress.in/" target="_blank" rel="noopener noreferrer">Home</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
 
-        <!-- Progress Area -->
-        <div id="progress-area" style="display: none;">
-            <p id="progress-text">Starting conversion...</p>
-            <div class="progress-bar">
-                <div class="progress" id="progress"></div>
+    <!-- ===== মূল কন্টেন্ট সেকশন ===== -->
+    <main>
+        <div class="converter-container">
+            <h1>Image to PDF Converter</h1>
+            <p class="subtitle">Upload your images and get high-quality PDFs instantly.</p>
+
+            <!-- Upload Form -->
+            <form id="upload-form">
+                <label for="file-upload-input" class="file-upload-wrapper">
+                    <img src="upload.png" alt="Upload Icon" class="upload-area-icon"/>
+                    <p><strong>Click to browse</strong> or drag and drop your files here</p>
+                    <p class="upload-limit">You can select a maximum of 5 files at a time.</p>
+                </label>
+                <input type="file" name="images" id="file-upload-input" accept="image/*" multiple>
+            </form>
+
+            <!-- Progress Area -->
+            <div id="progress-area" style="display: none;">
+                <p id="progress-text">Starting conversion...</p>
+                <div class="progress-bar">
+                    <div class="progress" id="progress"></div>
+                </div>
+                <p id="current-file-text"></p>
             </div>
-            <p id="current-file-text"></p>
-        </div>
 
-        <!-- Preview Area -->
-        <div class="preview-area" id="preview-area">
-            <!-- JavaScript দিয়ে প্রিভিউ কার্ড তৈরি হবে -->
+            <!-- Preview Area -->
+            <div class="preview-area" id="preview-area">
+                <!-- JavaScript দিয়ে প্রিভিউ কার্ড তৈরি হবে -->
+            </div>
         </div>
-    </div>
+    </main>
 
-    <!-- Custom Script (এখন এটি একই ফোল্ডারে আছে) -->
+    <!-- ===== ফুটার সেকশন ===== -->
+    <footer class="site-footer">
+        <div class="footer-container">
+            <ul class="footer-links">
+                <li><a href="https://www.imagecompress.in/about-us/" target="_blank" rel="noopener noreferrer">About Us</a></li>
+                <li><a href="https://www.imagecompress.in/contact-us/" target="_blank" rel="noopener noreferrer">Contact Us</a></li>
+                <li><a href="https://www.imagecompress.in/disclaimer/" target="_blank" rel="noopener noreferrer">Disclaimer</a></li>
+                <li><a href="https://www.imagecompress.in/dmca-policy/" target="_blank" rel="noopener noreferrer">DMCA Policy</a></li>
+                <li><a href="https://www.imagecompress.in/privacy-policy/" target="_blank" rel="noopener noreferrer">Privacy Policy</a></li>
+                <li><a href="https://www.imagecompress.in/terms-and-conditions/" target="_blank" rel="noopener noreferrer">Terms and Conditions</a></li>
+            </ul>
+            <p class="copyright-text">&copy; 2025 imagecompress.in All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Custom Script -->
     <script src="script.js"></script>
 </body>
 </html>
