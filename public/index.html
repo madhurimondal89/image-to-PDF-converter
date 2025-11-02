@@ -3,23 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- ===== SEO Meta Tags (নতুন যোগ করা হয়েছে) ===== -->
     <title>Image to PDF Converter - Free & Easy Online Tool</title>
     <meta name="description" content="Easily convert your images (JPG, PNG, etc.) to high-quality PDF files for free. Our online tool is fast, secure, and requires no registration. Convert and download your PDF in seconds!">
-
-    <!-- Favicon Links -->
+    
     <link rel="icon" type="image/png" href="/icon.png">
 
-    <!-- Font Awesome Icons -->
+    <!-- স্ট্রাকচার্ড ডেটা (Rich Snippets) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      "name": "How to Convert Image to PDF in 3 Easy Steps",
+      "totalTime": "PT1M",
+      "step": [{
+        "@type": "HowToStep",
+        "name": "Step 1: Upload Your Image",
+        "text": "Click the upload area or drag and drop your image files (like JPG, PNG) into the box. You can select up to 5 images at a time.",
+        "url": "https://image-to-pdf.imagecompress.in/#upload-form"
+      },{
+        "@type": "HowToStep",
+        "name": "Step 2: Automatic Conversion",
+        "text": "Our tool instantly begins to convert your image to PDF format as soon as the upload is complete, ensuring high quality."
+      },{
+        "@type": "HowToStep",
+        "name": "Step 3: Download Your PDF",
+        "text": "After a few seconds, a preview of the converted files will appear. Click the 'Download PDF' button next to each file to save it to your device.",
+        "url": "https://image-to-pdf.imagecompress.in/#preview-area"
+      }]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [{
+        "@type": "Question",
+        "name": "Is this image to PDF converter free to use?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, our online tool is 100% free for everyone. There are no hidden costs, subscription fees, or limits on the number of conversions."
+        }
+      },{
+        "@type": "Question",
+        "name": "What image formats are supported?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "We support all major image formats, including JPG, JPEG, PNG, GIF, BMP, and TIFF. You can upload any of these to easily convert photo to PDF."
+        }
+      },{
+        "@type": "Question",
+        "name": "Are my uploaded files safe and private?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Absolutely. Your privacy is our priority. We use secure connections, and all uploaded files are permanently deleted from our servers after 30 minutes."
+        }
+      }]
+    }
+    </script>
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
-    
-    <!-- Custom Stylesheet -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- ===== হেডার সেকশন ===== -->
     <header class="site-header">
         <div class="header-container">
             <a href="/" class="logo-link">
@@ -33,13 +79,10 @@
         </div>
     </header>
 
-    <!-- ===== মূল কন্টেন্ট সেকশন ===== -->
     <main>
         <div class="converter-container">
             <h1>Image to PDF Converter</h1>
             <p class="subtitle">Upload your images and get high-quality PDFs instantly.</p>
-
-            <!-- Upload Form -->
             <form id="upload-form">
                 <label for="file-upload-input" class="file-upload-wrapper">
                     <img src="upload.png" alt="Upload Icon" class="upload-area-icon"/>
@@ -48,24 +91,74 @@
                 </label>
                 <input type="file" name="images" id="file-upload-input" accept="image/*" multiple>
             </form>
-
-            <!-- Progress Area -->
+            
+            <!-- *** ভুলটি এখানে ঠিক করা হয়েছে *** -->
             <div id="progress-area" style="display: none;">
                 <p id="progress-text">Starting conversion...</p>
-                <div class="progress-bar">
-                    <div class="progress" id="progress"></div>
-                </div>
+                <div class="progress-bar"><div class="progress" id="progress"></div></div>
                 <p id="current-file-text"></p>
             </div>
 
-            <!-- Preview Area -->
-            <div class="preview-area" id="preview-area">
-                <!-- JavaScript দিয়ে প্রিভিউ কার্ড তৈরি হবে -->
-            </div>
+            <div class="preview-area" id="preview-area"></div>
         </div>
+
+        <section class="content-section">
+            <div class="accordion">
+                
+                <div class="accordion-item">
+                    <button class="accordion-header">How to Convert Image to PDF<i class="fas fa-chevron-down"></i></button>
+                    <div class="accordion-content">
+                        <ol class="how-to-list">
+                            <li><strong>Upload Your Image:</strong> Click the upload area or drag and drop your image files into the box. You can upload up to 5 images at once.</li>
+                            <li><strong>Instant Conversion:</strong> Our tool automatically starts converting your images to high-quality PDF files.</li>
+                            <li><strong>Download Your PDF:</strong> A preview will appear. Click "Download PDF" next to each image to save your file.</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <button class="accordion-header">Why Choose Our Online PDF Converter?<i class="fas fa-chevron-down"></i></button>
+                    <div class="accordion-content">
+                        <div class="features-grid">
+                            <div class="feature-item"><i class="fas fa-bolt"></i><h3>Lightning Fast</h3><p>Our servers convert your images to PDF in seconds, saving you time.</p></div>
+                            <div class="feature-item"><i class="fas fa-lock"></i><h3>Secure & Private</h3><p>All uploaded files are automatically deleted from our servers after 30 minutes.</p></div>
+                            <div class="feature-item"><i class="fas fa-gem"></i><h3>High-Quality Output</h3><p>Your PDF will retain the original quality and resolution of your images.</p></div>
+                            <div class="feature-item"><i class="fas fa-mobile-alt"></i><h3>Mobile Friendly</h3><p>Our tool is fully responsive and works perfectly on any device, including smartphones.</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <button class="accordion-header">Frequently Asked Questions (FAQ)<i class="fas fa-chevron-down"></i></button>
+                    <div class="accordion-content">
+                        <div class="faq-section">
+                            <div class="faq-item"><h3>Is this image to PDF converter free to use?</h3><p>Yes, our online tool is 100% free for everyone. There are no hidden costs, subscription fees, or limits on the number of conversions.</p></div>
+                            <div class="faq-item"><h3>What image formats are supported?</h3><p>We support all major image formats, including JPG, JPEG, PNG, GIF, BMP, and TIFF. You can upload any of these to easily convert photo to PDF.</p></div>
+                            <div class="faq-item"><h3>Are my uploaded files safe and private?</h3><p>Absolutely. Your privacy is our priority. We use secure connections, and all uploaded files are permanently deleted from our servers after 30 minutes.</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <button class="accordion-header">A Guide to Image to PDF Conversion<i class="fas fa-chevron-down"></i></button>
+                    <div class="accordion-content">
+                        <div class="seo-article">
+                            <h3>The Importance of Converting Images to PDF</h3>
+                            <p>In our digital age, images are everywhere. From scanned documents and receipts to precious family photos, we manage countless visual files. However, sharing or archiving these images can be challenging. This is where the need to <strong>convert image to PDF</strong> becomes essential. A PDF (Portable Document Format) file acts as a universal container, preserving the look and feel of your original file, regardless of the device it's viewed on.</p>
+                            <h3>When Should You Convert a Photo to PDF?</h3>
+                            <p>There are numerous scenarios where converting a <strong>photo to PDF</strong> is the best solution. For professionals, submitting a resume with a headshot or creating a portfolio requires a polished, single-file format. For students, turning pictures of lecture notes or textbook pages into a PDF makes studying and sharing much easier. By using a reliable tool, you can effortlessly turn any <strong>picture to PDF</strong>, ensuring your documents are organized and easy to handle.</p>
+                            <h3>Seamlessly Convert JPG to PDF</h3>
+                            <p>JPG is the most common image format, especially for photographs. Often, you'll find the need to <strong>convert JPG to PDF</strong> to maintain consistency in your documents. Whether you are compiling a report, creating an e-book, or simply archiving images, our tool makes this process seamless. The process to <strong>convert photo to pdf</strong> is the same for JPGs as it is for other formats like PNG, ensuring a hassle-free experience every time.</p>
+                            <h3>Why Our Tool is Your Best Choice</h3>
+                            <p>Our free online tool is designed to be the simplest and most efficient solution for all your conversion needs. It's the perfect way to turn any <strong>image to PDF</strong> without compromising on quality or security. Give it a try and see how easy managing your digital documents can be!</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
     </main>
 
-    <!-- ===== ফুটার সেকশন ===== -->
     <footer class="site-footer">
         <div class="footer-container">
             <ul class="footer-links">
@@ -80,7 +173,6 @@
         </div>
     </footer>
 
-    <!-- Custom Script -->
     <script src="script.js"></script>
 </body>
 </html>

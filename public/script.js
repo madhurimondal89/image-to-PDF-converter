@@ -1,6 +1,28 @@
 document.addEventListener('DOMContentLoaded', () => {
     const MAX_FILES = 5;
 
+    // অ্যাকর্ডিয়নের জন্য কোড
+    const accordionHeaders = document.querySelectorAll('.accordion-header');
+    accordionHeaders.forEach(header => {
+        header.addEventListener('click', () => {
+            const content = header.nextElementSibling;
+            const isActive = header.classList.contains('active');
+
+            // সব আইটেম বন্ধ করে দেওয়া
+            accordionHeaders.forEach(h => {
+                h.classList.remove('active');
+                h.nextElementSibling.style.maxHeight = null;
+            });
+
+            // যদি বর্তমান আইটেমটি বন্ধ থাকে, তবে সেটি খোলা হবে
+            if (!isActive) {
+                header.classList.add('active');
+                content.style.maxHeight = content.scrollHeight + "px";
+            }
+        });
+    });
+
+    // (আপনার বাকি সমস্ত script.js কোড এখানে অপরিবর্তিত থাকবে)
     const uploadForm = document.getElementById('upload-form');
     const fileInput = document.getElementById('file-upload-input');
     const dropZone = document.querySelector('.file-upload-wrapper');
@@ -9,7 +31,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const progressText = document.getElementById('progress-text');
     const currentFileText = document.getElementById('current-file-text');
     const previewArea = document.getElementById('preview-area');
-
     let eventSource = null;
 
     fileInput.addEventListener('change', () => handleFileSelection(fileInput.files));
@@ -35,29 +56,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function handleFiles(files) {
         if (eventSource) eventSource.close();
-
         uploadForm.style.display = 'none';
         progressArea.style.display = 'block';
         previewArea.innerHTML = '';
-
         const formData = new FormData();
         for (const file of files) {
             formData.append('images', file);
         }
-
         try {
             const response = await fetch('/upload', { method: 'POST', body: formData });
             const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.error || `Server error: ${response.statusText}`);
-            }
-
-            if (result.jobId) {
-                startStatusListener(result.jobId, files);
-            } else {
-                throw new Error('Could not start conversion job.');
-            }
+            if (!response.ok) { throw new Error(result.error || `Server error: ${response.statusText}`); }
+            if (result.jobId) { startStatusListener(result.jobId, files); } 
+            else { throw new Error('Could not start conversion job.'); }
         } catch (error) {
             alert('Upload failed: ' + error.message);
             resetUI();
@@ -67,13 +78,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function startStatusListener(jobId, originalFiles) {
         eventSource = new EventSource(`/conversion-status/${jobId}`);
         let processedFilesCount = 0;
-
         eventSource.onmessage = (event) => {
             const job = JSON.parse(event.data);
             const percentComplete = (job.completed / job.total) * 100;
             progressBar.style.width = percentComplete + '%';
             progressText.textContent = `Converting ${job.completed} of ${job.total} files...`;
-
             if (job.completed > processedFilesCount) {
                 const newFiles = job.files.slice(processedFilesCount);
                 newFiles.forEach(fileData => {
@@ -85,23 +94,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 processedFilesCount = job.completed;
             }
-
             const isJobDone = job.completed === job.total;
             if (isJobDone) {
                 eventSource.close();
                 progressText.textContent = 'Conversion Complete!';
                 currentFileText.textContent = '';
-                
                 setTimeout(resetUI, 5000);
             }
-
             if (job.error) {
                 eventSource.close();
                 alert('An error occurred: ' + job.error);
                 resetUI();
             }
         };
-
         eventSource.onerror = () => {
             eventSource.close();
             alert('Connection to server lost.');
@@ -116,7 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
             card.className = 'preview-card';
             card.dataset.pdfFile = fileData.pdfFile;
             card.style.animationDelay = `${delay}ms`;
-            
             const originalPdfName = `${path.parse(fileData.originalName).name}.pdf`;
             card.innerHTML = `
                 <img src="${e.target.result}" alt="Preview" class="preview-image">
