@@ -69,26 +69,41 @@ p.subtitle { color: var(--light-text-color); margin-bottom: 30px; font-size: 1.1
 .feature-item h3 { font-size: 1.2rem; margin-bottom: 10px; color: var(--text-color); }
 .faq-item { margin-bottom: 20px; }
 .faq-item h3 { font-size: 1.1rem; margin-bottom: 5px; color: var(--text-color); }
-
-/* ===== SEO আর্টিকেলের জন্য নতুন স্টাইল ===== */
-.seo-article h3 {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: var(--text-color);
-    margin-top: 15px;
-    margin-bottom: 10px;
-}
-.seo-article p {
-    margin-bottom: 15px;
-}
-.seo-article p:last-child {
-    margin-bottom: 0;
-}
-
-/* ফুটার স্টাইল */
+.seo-article h3 { font-size: 1.2rem; font-weight: 600; color: var(--text-color); margin-top: 15px; margin-bottom: 10px; }
+.seo-article p { margin-bottom: 15px; }
+.seo-article p:last-child { margin-bottom: 0; }
 .site-footer { width: 100%; background-color: var(--footer-bg-color); color: var(--footer-text-color); padding: 40px 20px; text-align: center; }
 .footer-container { max-width: 800px; margin: 0 auto; }
 .footer-links { list-style: none; padding: 0; margin: 0 0 20px 0; display: flex; justify-content: center; flex-wrap: wrap; gap: 15px 25px; }
 .footer-links a { color: var(--footer-text-color); text-decoration: none; transition: color 0.3s; }
 .footer-links a:hover { color: #fff; text-decoration: underline; }
 .copyright-text { font-size: 0.9rem; color: #95a5a6; }
+
+
+/* ===== AdSense সাইডবার বিজ্ঞাপনের জন্য নতুন স্টাইল ===== */
+.ad-container-left,
+.ad-container-right {
+    position: fixed; /* স্ক্রিনের সাপেক্ষে স্থির থাকবে */
+    top: 100px; /* হেডার থেকে কিছুটা নিচে */
+    width: 160px; /* একটি স্ট্যান্ডার্ড সাইডবার বিজ্ঞাপনের আকার */
+    height: 600px;
+    z-index: 10;
+    display: none; /* ডিফল্টভাবে লুকানো থাকবে */
+}
+
+.ad-container-left {
+    left: 20px; /* বাম দিক থেকে ২০ পিক্সেল দূরে */
+}
+
+.ad-container-right {
+    right: 20px; /* ডান দিক থেকে ২০ পিক্সেল দূরে */
+}
+
+/* শুধুমাত্র চওড়া স্ক্রিনে (ডেস্কটপ) বিজ্ঞাপনগুলো দেখানো হবে */
+/* 800px (main container) + 160px (left ad) + 160px (right ad) + margins = ~1200px */
+@media (min-width: 1200px) {
+    .ad-container-left,
+    .ad-container-right {
+        display: block;
+    }
+}
