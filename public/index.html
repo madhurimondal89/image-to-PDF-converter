@@ -115,6 +115,9 @@
     </script>
 
     <!-- Stylesheets -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@700&family=Instrument+Sans:wght@400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -164,7 +167,7 @@
     <main>
         <div class="converter-container">
             <h1>Image to PDF Converter</h1>
-            <p class="subtitle">Convert your images to high-quality PDFs instantly — 100% in your browser.</p>
+            <p class="subtitle">Convert your images to high-quality PDFs instantly, 100% in your browser.</p>
 
             <!-- Inline Notification Toast -->
             <div id="status-toast" class="status-toast" role="alert" aria-live="assertive" style="display: none;"></div>
@@ -173,7 +176,7 @@
                 <label for="file-upload-input" class="file-upload-wrapper">
                     <img src="upload.png" alt="" aria-hidden="true" class="upload-area-icon"/>
                     <p><strong>Click to browse</strong> or drag and drop your files here</p>
-                    <p class="upload-limit">JPG, PNG, WebP, GIF, BMP &bull; Max 25 files &bull; No server upload</p>
+                    <p class="upload-limit">JPG, PNG, WebP, GIF, BMP (up to 25 files, processed locally)</p>
                     <input type="file" name="images" id="file-upload-input" class="sr-only" accept=".jpg,.jpeg,.png,.webp,.gif,.bmp,image/jpeg,image/png,image/webp,image/gif,image/bmp" multiple>
                 </label>
             </form>
@@ -214,7 +217,7 @@
 
             <!-- Progress Area -->
             <div id="progress-area" aria-live="polite" style="display: none;">
-                <p id="progress-text">Starting conversion...</p>
+                <p id="progress-text">Starting conversion…</p>
                 <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                     <div class="progress" id="progress"></div>
                 </div>
@@ -259,7 +262,7 @@
                     <div id="acc-features" class="accordion-content">
                         <div class="features-grid">
                             <div class="feature-item"><i class="fas fa-bolt" aria-hidden="true"></i><h3>Lightning Fast</h3><p>Converts your images right inside your browser with zero upload wait time.</p></div>
-                            <div class="feature-item"><i class="fas fa-lock" aria-hidden="true"></i><h3>100% Private</h3><p>Your images never leave your device—nothing is uploaded to any server.</p></div>
+                            <div class="feature-item"><i class="fas fa-lock" aria-hidden="true"></i><h3>100% Private</h3><p>Your images never leave your device, so nothing is uploaded to any server.</p></div>
                             <div class="feature-item"><i class="fas fa-gem" aria-hidden="true"></i><h3>High-Quality Output</h3><p>Your PDF retains the original quality and resolution of your images.</p></div>
                             <div class="feature-item"><i class="fas fa-mobile-alt" aria-hidden="true"></i><h3>Mobile Friendly</h3><p>Works smoothly on desktop, tablet, and smartphone browsers.</p></div>
                         </div>
@@ -275,7 +278,7 @@
                         <div class="faq-section">
                             <div class="faq-item"><h3>Is this image to PDF converter free to use?</h3><p>Yes, our online tool is 100% free for everyone. There are no hidden costs, subscription fees, or limits on the number of conversions.</p></div>
                             <div class="faq-item"><h3>What image formats are supported?</h3><p>We support JPG, JPEG, PNG, WebP, GIF, and BMP image formats, with an option to merge multiple images into one PDF.</p></div>
-                            <div class="faq-item"><h3>Are my uploaded files safe and private?</h3><p>Yes, 100%. Everything runs locally in your browser—your images are never sent to or stored on any server.</p></div>
+                            <div class="faq-item"><h3>Are my uploaded files safe and private?</h3><p>Yes, 100%. Everything runs locally in your browser, so your images are never sent to or stored on any server.</p></div>
                         </div>
                     </div>
                 </div>
@@ -287,14 +290,14 @@
                     </button>
                     <div id="acc-guide" class="accordion-content">
                         <div class="seo-article">
-                            <h3>The Importance of Converting Images to PDF</h3>
-                            <p>In our digital age, images are everywhere. From scanned documents and receipts to precious family photos, we manage countless visual files. However, sharing or archiving these images can be challenging. This is where the need to <strong>convert image to PDF</strong> becomes essential. A PDF (Portable Document Format) file acts as a universal container, preserving the look and feel of your original file, regardless of the device it's viewed on.</p>
-                            <h3>When Should You Convert a Photo to PDF?</h3>
-                            <p>There are numerous scenarios where converting a <strong>photo to PDF</strong> is the best solution. For professionals, submitting a resume with a headshot or creating a portfolio requires a polished, single-file format. For students, turning pictures of lecture notes or textbook pages into a PDF makes studying and sharing much easier. By using a reliable tool, you can effortlessly turn any <strong>picture to PDF</strong>, ensuring your documents are organized and easy to handle.</p>
-                            <h3>Seamlessly Convert JPG to PDF</h3>
-                            <p>JPG is the most common image format, especially for photographs. Often, you'll find the need to <strong>convert JPG to PDF</strong> to maintain consistency in your documents. Whether you are compiling a report, creating an e-book, or simply archiving images, our tool makes this process seamless. The process to <strong>convert photo to pdf</strong> is the same for JPGs as it is for PNGs and WebPs, ensuring a hassle-free experience every time.</p>
-                            <h3>Why Our Tool is Your Best Choice</h3>
-                            <p>Our free online tool is designed to be the simplest and most efficient solution for all your conversion needs. Because conversion happens directly in your browser, you get instant results with complete privacy.</p>
+                            <h3>Why Convert Images to PDF?</h3>
+                            <p>Scanned receipts, handwritten notes, and phone photos are hard to share in sequence as loose image files. Packing them into a PDF keeps the page order, margins, and layout consistent on every phone, laptop, or printer.</p>
+                            <h3>Common Uses for Photo to PDF</h3>
+                            <p>Students combine lecture-board photos into a single study packet, and applicants bundle ID scans or certificates into one attachment. With A4, US Letter, and Fit-to-Image sizing, your pages stay ready for email or print.</p>
+                            <h3>JPG, PNG, and WebP in One Place</h3>
+                            <p>You can drop mixed JPG, PNG, WebP, GIF, and BMP files together, rotate any sideways shot 90 degrees, and export either separate PDFs (as a ZIP) or one merged document.</p>
+                            <h3>Private by Design</h3>
+                            <p>Every conversion runs locally inside your browser using client-side PDF generation. Your files never leave your device.</p>
                         </div>
                     </div>
                 </div>
