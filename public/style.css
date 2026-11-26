@@ -126,7 +126,38 @@ p.subtitle { color: var(--light-text-color); margin-bottom: 24px; font-size: 1.0
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 8px 12px;
+    cursor: grab;
+    transition: border-color 0.15s, opacity 0.15s;
 }
+.staged-file-item.dragging { opacity: 0.45; }
+.staged-file-item.drag-target { border-color: var(--primary-color); background: #f5f3ff; }
+.drag-handle { color: #aaa; font-size: 0.85rem; flex-shrink: 0; }
+.rotation-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    background: #f5f3ff;
+    padding: 1px 6px;
+    border-radius: 999px;
+    flex-shrink: 0;
+}
+.staged-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+.staged-icon-btn {
+    background: none;
+    border: none;
+    color: var(--light-text-color);
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+.staged-icon-btn:hover:not(:disabled) { color: var(--primary-color); background: #f5f3ff; }
+.staged-icon-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 .staged-file-info {
     display: flex;
     align-items: center;

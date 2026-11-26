@@ -7,9 +7,9 @@
 - [ImageCompress.in Home](https://www.imagecompress.in/): Parent image utility suite.
 
 ## Key Capabilities
-- **Supported Input Formats**: JPG, JPEG, PNG, WebP, GIF, BMP (up to 5 files per batch, 25 MB each).
+- **Supported Input Formats**: JPG, JPEG, PNG, WebP, GIF, and BMP (up to 25 files per batch, 25 MB each).
 - **Output Options**: Individual PDF per image, Batch ZIP download for multiple PDFs, or merge multiple images into a single multi-page PDF.
-- **Page Sizing**: Fit to Image (original resolution), A4 (auto portrait/landscape), or US Letter (auto portrait/landscape).
+- **Page Sizing & Editing**: Fit to Image (original resolution), A4 (auto portrait/landscape), or US Letter (auto portrait/landscape), custom margins (None, Small, Large), drag-to-reorder, and 90° image rotation.
 - **100% Client-Side Privacy**: Uses in-browser PDF generation (`pdf-lib` and HTML5 Canvas). Images never leave the user's device.
 - **Cost**: 100% free, no registration, no watermarks.
 

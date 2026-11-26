@@ -69,7 +69,7 @@
       "step": [{
         "@type": "HowToStep",
         "name": "Step 1: Select Your Images",
-        "text": "Click the upload area or drag and drop your image files (JPG, PNG, WebP, GIF, BMP) into the box. You can select up to 5 images at a time.",
+        "text": "Click the upload area or drag and drop your image files (JPG, PNG, WebP, GIF, BMP) into the box. You can select up to 25 images at a time.",
         "url": "https://image-to-pdf.imagecompress.in/#upload-form"
       },{
         "@type": "HowToStep",
@@ -173,7 +173,7 @@
                 <label for="file-upload-input" class="file-upload-wrapper">
                     <img src="upload.png" alt="" aria-hidden="true" class="upload-area-icon"/>
                     <p><strong>Click to browse</strong> or drag and drop your files here</p>
-                    <p class="upload-limit">JPG, PNG, WebP, GIF, BMP &bull; Max 5 files &bull; No server upload</p>
+                    <p class="upload-limit">JPG, PNG, WebP, GIF, BMP &bull; Max 25 files &bull; No server upload</p>
                     <input type="file" name="images" id="file-upload-input" class="sr-only" accept=".jpg,.jpeg,.png,.webp,.gif,.bmp,image/jpeg,image/png,image/webp,image/gif,image/bmp" multiple>
                 </label>
             </form>
@@ -192,6 +192,14 @@
                             <option value="fit">Fit to Image (Original)</option>
                             <option value="a4">A4 (Auto Orientation)</option>
                             <option value="letter">US Letter (Auto Orientation)</option>
+                        </select>
+                    </label>
+                    <label class="option-group" for="margin-select">
+                        <span>Margin:</span>
+                        <select id="margin-select" class="page-size-select">
+                            <option value="0">None</option>
+                            <option value="20" selected>Small</option>
+                            <option value="48">Large</option>
                         </select>
                     </label>
                     <label class="merge-option">
@@ -236,8 +244,8 @@
                     </button>
                     <div id="acc-howto" class="accordion-content">
                         <ol class="how-to-list">
-                            <li><strong>Select Your Images:</strong> Click the upload area or drag and drop up to 5 images (JPG, PNG, WebP, GIF, BMP) into the box.</li>
-                            <li><strong>Review &amp; Convert:</strong> Optionally check "Merge all selected images into a single PDF", then click "Convert to PDF".</li>
+                            <li><strong>Select Your Images:</strong> Click the upload area or drag and drop up to 25 images (JPG, PNG, WebP, GIF, BMP) into the box.</li>
+                            <li><strong>Customize &amp; Convert:</strong> Drag to reorder, rotate images, pick Page Size (Fit/A4/Letter) &amp; Margin, or check "Merge all into a single PDF", then click "Convert to PDF".</li>
                             <li><strong>Download Your PDF:</strong> Your PDFs are generated locally in your browser in seconds. Click "Download PDF" to save them.</li>
                         </ol>
                     </div>

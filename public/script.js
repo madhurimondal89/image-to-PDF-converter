@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const MAX_FILES = 5;
+    const MAX_FILES = 25;
     const MAX_FILE_SIZE = 25 * 1024 * 1024;
     const ALLOWED_TYPES = new Set([
         'image/jpeg',
@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const stagingList = document.getElementById('staging-list');
     const clearStagingBtn = document.getElementById('clear-staging-btn');
     const pageSizeSelect = document.getElementById('page-size-select');
+    const marginSelect = document.getElementById('margin-select');
     const mergeCheckbox = document.getElementById('merge-pdf-checkbox');
     const convertBtn = document.getElementById('convert-btn');
     const progressArea = document.getElementById('progress-area');
@@ -54,7 +55,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const previewArea = document.getElementById('preview-area');
 
     let toastTimer = null;
-    let stagedFiles = [];
+    let stagedItems = []; // { file: File, rotation: 0|90|180|270 }
+    let dragSrcIndex = null;
     let generatedPdfs = [];
     const activeBlobUrls = new Set();
 
@@ -134,8 +136,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const lv = new DataView(localHeader);
             lv.setUint32(0, 0x04034b50, true);
             lv.setUint16(4, 20, true);
-            lv.setUint16(6, 0x0800, true); // UTF-8 flag
-            lv.setUint16(8, 0, true); // Store (no compression)
+            lv.setUint16(6, 0x0800, true);
+            lv.setUint16(8, 0, true);
             lv.setUint16(10, 0, true);
             lv.setUint16(12, 0, true);
             lv.setUint32(14, crc, true);
@@ -208,18 +210,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     clearStagingBtn.addEventListener('click', () => {
-        stagedFiles = [];
+        stagedItems = [];
         renderStaging();
     });
 
     convertBtn.addEventListener('click', () => {
-        if (stagedFiles.length > 0) {
-            const filesToConvert = [...stagedFiles];
+        if (stagedItems.length > 0) {
+            const itemsToConvert = [...stagedItems];
             const shouldMerge = mergeCheckbox.checked;
             const pageSizeMode = pageSizeSelect.value;
-            stagedFiles = [];
+            const marginPt = parseInt(marginSelect.value, 10) || 0;
+            stagedItems = [];
             renderStaging();
-            convertInBrowser(filesToConvert, shouldMerge, pageSizeMode);
+            convertInBrowser(itemsToConvert, shouldMerge, pageSizeMode, marginPt);
         }
     });
 
@@ -257,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const errors = [];
         for (const file of incoming) {
-            if (stagedFiles.length >= MAX_FILES) {
+            if (stagedItems.length >= MAX_FILES) {
                 errors.push(`Maximum ${MAX_FILES} files allowed at a time.`);
                 break;
             }
@@ -271,7 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 errors.push(`"${file.name}" exceeds the 25 MB limit.`);
                 continue;
             }
-            stagedFiles.push(file);
+            stagedItems.push({ file, rotation: 0 });
         }
 
         if (errors.length > 0) {
@@ -280,33 +283,110 @@ document.addEventListener('DOMContentLoaded', () => {
         renderStaging();
     }
 
+    function moveStagedItem(fromIndex, toIndex) {
+        if (toIndex < 0 || toIndex >= stagedItems.length || fromIndex === toIndex) return;
+        const [moved] = stagedItems.splice(fromIndex, 1);
+        stagedItems.splice(toIndex, 0, moved);
+        renderStaging();
+    }
+
     function renderStaging() {
         stagingList.innerHTML = '';
-        if (stagedFiles.length === 0) {
+        if (stagedItems.length === 0) {
             stagingArea.style.display = 'none';
             return;
         }
 
         stagingArea.style.display = 'block';
-        stagingCount.textContent = `${stagedFiles.length} of ${MAX_FILES} file${stagedFiles.length > 1 ? 's' : ''} ready`;
+        stagingCount.textContent = `${stagedItems.length} of ${MAX_FILES} file${stagedItems.length > 1 ? 's' : ''} ready (drag to reorder)`;
 
-        stagedFiles.forEach((file, index) => {
+        stagedItems.forEach((item, index) => {
+            const { file, rotation } = item;
             const li = document.createElement('li');
             li.className = 'staged-file-item';
+            li.draggable = true;
+            li.dataset.index = String(index);
+
+            li.addEventListener('dragstart', (e) => {
+                dragSrcIndex = index;
+                li.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+            li.addEventListener('dragend', () => {
+                li.classList.remove('dragging');
+                dragSrcIndex = null;
+            });
+            li.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                li.classList.add('drag-target');
+            });
+            li.addEventListener('dragleave', () => {
+                li.classList.remove('drag-target');
+            });
+            li.addEventListener('drop', (e) => {
+                e.preventDefault();
+                li.classList.remove('drag-target');
+                if (dragSrcIndex !== null && dragSrcIndex !== index) {
+                    moveStagedItem(dragSrcIndex, index);
+                }
+            });
 
             const info = document.createElement('div');
             info.className = 'staged-file-info';
 
+            const handle = document.createElement('span');
+            handle.className = 'drag-handle';
+            handle.setAttribute('aria-hidden', 'true');
+            handle.innerHTML = '<i class="fas fa-grip-vertical"></i>';
+
             const nameSpan = document.createElement('span');
             nameSpan.className = 'staged-file-name';
-            nameSpan.textContent = file.name;
+            nameSpan.textContent = `${index + 1}. ${file.name}`;
 
             const sizeSpan = document.createElement('span');
             sizeSpan.className = 'staged-file-size';
             sizeSpan.textContent = formatBytes(file.size);
 
+            info.appendChild(handle);
             info.appendChild(nameSpan);
             info.appendChild(sizeSpan);
+
+            if (rotation !== 0) {
+                const rotBadge = document.createElement('span');
+                rotBadge.className = 'rotation-badge';
+                rotBadge.textContent = `${rotation}°`;
+                info.appendChild(rotBadge);
+            }
+
+            const actions = document.createElement('div');
+            actions.className = 'staged-actions';
+
+            const upBtn = document.createElement('button');
+            upBtn.type = 'button';
+            upBtn.className = 'staged-icon-btn';
+            upBtn.disabled = index === 0;
+            upBtn.setAttribute('aria-label', `Move ${file.name} up`);
+            upBtn.innerHTML = '<i class="fas fa-arrow-up" aria-hidden="true"></i>';
+            upBtn.addEventListener('click', () => moveStagedItem(index, index - 1));
+
+            const downBtn = document.createElement('button');
+            downBtn.type = 'button';
+            downBtn.className = 'staged-icon-btn';
+            downBtn.disabled = index === stagedItems.length - 1;
+            downBtn.setAttribute('aria-label', `Move ${file.name} down`);
+            downBtn.innerHTML = '<i class="fas fa-arrow-down" aria-hidden="true"></i>';
+            downBtn.addEventListener('click', () => moveStagedItem(index, index + 1));
+
+            const rotateBtn = document.createElement('button');
+            rotateBtn.type = 'button';
+            rotateBtn.className = 'staged-icon-btn';
+            rotateBtn.setAttribute('aria-label', `Rotate ${file.name} 90 degrees`);
+            rotateBtn.title = 'Rotate 90°';
+            rotateBtn.innerHTML = '<i class="fas fa-rotate-right" aria-hidden="true"></i>';
+            rotateBtn.addEventListener('click', () => {
+                item.rotation = (item.rotation + 90) % 360;
+                renderStaging();
+            });
 
             const removeBtn = document.createElement('button');
             removeBtn.type = 'button';
@@ -314,17 +394,22 @@ document.addEventListener('DOMContentLoaded', () => {
             removeBtn.setAttribute('aria-label', `Remove ${file.name}`);
             removeBtn.innerHTML = '<i class="fas fa-times" aria-hidden="true"></i>';
             removeBtn.addEventListener('click', () => {
-                stagedFiles.splice(index, 1);
+                stagedItems.splice(index, 1);
                 renderStaging();
             });
 
+            actions.appendChild(upBtn);
+            actions.appendChild(downBtn);
+            actions.appendChild(rotateBtn);
+            actions.appendChild(removeBtn);
+
             li.appendChild(info);
-            li.appendChild(removeBtn);
+            li.appendChild(actions);
             stagingList.appendChild(li);
         });
     }
 
-    async function rasterizeToPngBytes(file) {
+    async function rasterizeToPngBytes(file, rotation = 0) {
         const imgUrl = URL.createObjectURL(file);
         try {
             const img = await new Promise((resolve, reject) => {
@@ -334,11 +419,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 el.src = imgUrl;
             });
 
+            const srcW = img.naturalWidth || img.width;
+            const srcH = img.naturalHeight || img.height;
+            const swap = rotation === 90 || rotation === 270;
+
             const canvas = document.createElement('canvas');
-            canvas.width = img.naturalWidth || img.width;
-            canvas.height = img.naturalHeight || img.height;
+            canvas.width = swap ? srcH : srcW;
+            canvas.height = swap ? srcW : srcH;
+
             const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate((rotation * Math.PI) / 180);
+            ctx.drawImage(img, -srcW / 2, -srcH / 2);
 
             const pngBlob = await new Promise((resolve, reject) => {
                 canvas.toBlob(
@@ -352,18 +444,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function computePageLayout(imgWidth, imgHeight, pageSizeMode) {
+    function computePageLayout(imgWidth, imgHeight, pageSizeMode, marginPt) {
         if (pageSizeMode === 'fit') {
-            return { pageW: imgWidth, pageH: imgHeight, x: 0, y: 0, drawW: imgWidth, drawH: imgHeight };
+            return {
+                pageW: imgWidth + marginPt * 2,
+                pageH: imgHeight + marginPt * 2,
+                x: marginPt,
+                y: marginPt,
+                drawW: imgWidth,
+                drawH: imgHeight
+            };
         }
 
         const base = pageSizeMode === 'letter' ? [612, 792] : [595.28, 841.89];
         const isLandscape = imgWidth > imgHeight;
         const pageW = isLandscape ? base[1] : base[0];
         const pageH = isLandscape ? base[0] : base[1];
-        const margin = 20;
-        const maxW = pageW - margin * 2;
-        const maxH = pageH - margin * 2;
+        const maxW = Math.max(10, pageW - marginPt * 2);
+        const maxH = Math.max(10, pageH - marginPt * 2);
         const scale = Math.min(maxW / imgWidth, maxH / imgHeight);
         const drawW = imgWidth * scale;
         const drawH = imgHeight * scale;
@@ -373,34 +471,37 @@ document.addEventListener('DOMContentLoaded', () => {
         return { pageW, pageH, x, y, drawW, drawH };
     }
 
-    async function embedImageInPdf(pdfDoc, file, pageSizeMode) {
+    async function embedImageInPdf(pdfDoc, item, pageSizeMode, marginPt) {
+        const { file, rotation } = item;
         const ext = getExtension(file.name);
-        const rawBytes = new Uint8Array(await file.arrayBuffer());
-
         let embeddedImg;
-        if (file.type === 'image/jpeg' || file.type === 'image/jpg' || ext === '.jpg' || ext === '.jpeg') {
+
+        if (rotation === 0 && (file.type === 'image/jpeg' || file.type === 'image/jpg' || ext === '.jpg' || ext === '.jpeg')) {
+            const rawBytes = new Uint8Array(await file.arrayBuffer());
             try {
                 embeddedImg = await pdfDoc.embedJpg(rawBytes);
             } catch {
-                const pngBytes = await rasterizeToPngBytes(file);
+                const pngBytes = await rasterizeToPngBytes(file, 0);
                 embeddedImg = await pdfDoc.embedPng(pngBytes);
             }
-        } else if (file.type === 'image/png' || ext === '.png') {
+        } else if (rotation === 0 && (file.type === 'image/png' || ext === '.png')) {
+            const rawBytes = new Uint8Array(await file.arrayBuffer());
             try {
                 embeddedImg = await pdfDoc.embedPng(rawBytes);
             } catch {
-                const pngBytes = await rasterizeToPngBytes(file);
+                const pngBytes = await rasterizeToPngBytes(file, 0);
                 embeddedImg = await pdfDoc.embedPng(pngBytes);
             }
         } else {
-            const pngBytes = await rasterizeToPngBytes(file);
+            const pngBytes = await rasterizeToPngBytes(file, rotation);
             embeddedImg = await pdfDoc.embedPng(pngBytes);
         }
 
         const { pageW, pageH, x, y, drawW, drawH } = computePageLayout(
             embeddedImg.width,
             embeddedImg.height,
-            pageSizeMode
+            pageSizeMode,
+            marginPt
         );
         const page = pdfDoc.addPage([pageW, pageH]);
         page.drawImage(embeddedImg, { x, y, width: drawW, height: drawH });
@@ -413,7 +514,7 @@ document.addEventListener('DOMContentLoaded', () => {
         progressText.textContent = statusMsg;
     }
 
-    async function convertInBrowser(files, shouldMerge, pageSizeMode) {
+    async function convertInBrowser(items, shouldMerge, pageSizeMode, marginPt) {
         if (!window.PDFLib || !window.PDFLib.PDFDocument) {
             showToast('PDF engine failed to load. Please refresh the page.', 'error');
             return;
@@ -426,7 +527,7 @@ document.addEventListener('DOMContentLoaded', () => {
         progressArea.style.display = 'block';
         convertMoreBtn.style.display = 'none';
         previewArea.innerHTML = '';
-        updateProgress(0, files.length, `Converting 0 of ${files.length} files in your browser...`);
+        updateProgress(0, items.length, `Converting 0 of ${items.length} files in your browser...`);
         currentFileText.textContent = '';
 
         const { PDFDocument } = window.PDFLib;
@@ -434,11 +535,11 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             if (shouldMerge) {
                 const mergedDoc = await PDFDocument.create();
-                for (let i = 0; i < files.length; i++) {
-                    const file = files[i];
-                    currentFileText.textContent = `Processing: ${file.name}`;
-                    await embedImageInPdf(mergedDoc, file, pageSizeMode);
-                    updateProgress(i + 1, files.length, `Processed ${i + 1} of ${files.length} images...`);
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    currentFileText.textContent = `Processing: ${item.file.name}`;
+                    await embedImageInPdf(mergedDoc, item, pageSizeMode, marginPt);
+                    updateProgress(i + 1, items.length, `Processed ${i + 1} of ${items.length} images...`);
                 }
 
                 const pdfBytes = new Uint8Array(await mergedDoc.save());
@@ -446,28 +547,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 const pdfUrl = URL.createObjectURL(pdfBlob);
                 activeBlobUrls.add(pdfUrl);
 
-                const mergedName = files.length === 1
-                    ? `${getBaseName(files[0].name)}.pdf`
+                const mergedName = items.length === 1
+                    ? `${getBaseName(items[0].file.name)}.pdf`
                     : 'merged-images.pdf';
 
                 generatedPdfs.push({ name: mergedName, bytes: pdfBytes });
-                createPreviewCard(files[0], mergedName, pdfUrl, 0, `${files.length} page${files.length > 1 ? 's' : ''} merged`);
+                createPreviewCard(items[0].file, mergedName, pdfUrl, 0, `${items.length} page${items.length > 1 ? 's' : ''} merged`);
             } else {
-                for (let i = 0; i < files.length; i++) {
-                    const file = files[i];
-                    currentFileText.textContent = `Processing: ${file.name}`;
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    currentFileText.textContent = `Processing: ${item.file.name}`;
                     const pdfDoc = await PDFDocument.create();
-                    await embedImageInPdf(pdfDoc, file, pageSizeMode);
+                    await embedImageInPdf(pdfDoc, item, pageSizeMode, marginPt);
 
                     const pdfBytes = new Uint8Array(await pdfDoc.save());
                     const pdfBlob = new Blob([pdfBytes], { type: 'application/pdf' });
                     const pdfUrl = URL.createObjectURL(pdfBlob);
                     activeBlobUrls.add(pdfUrl);
 
-                    const outputName = `${getBaseName(file.name)}.pdf`;
+                    const outputName = `${getBaseName(item.file.name)}.pdf`;
                     generatedPdfs.push({ name: outputName, bytes: pdfBytes });
-                    createPreviewCard(file, outputName, pdfUrl, i * 80);
-                    updateProgress(i + 1, files.length, `Converted ${i + 1} of ${files.length} files...`);
+                    createPreviewCard(item.file, outputName, pdfUrl, i * 60);
+                    updateProgress(i + 1, items.length, `Converted ${i + 1} of ${items.length} files...`);
                 }
 
                 if (generatedPdfs.length > 1) {
