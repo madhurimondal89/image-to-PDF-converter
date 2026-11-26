@@ -155,6 +155,23 @@ p.subtitle { color: var(--light-text-color); margin-bottom: 24px; font-size: 1.0
 }
 .staged-remove-btn:hover { color: var(--danger-color); background: #fde8ea; }
 
+.merge-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    margin-bottom: 14px;
+    cursor: pointer;
+    user-select: none;
+}
+.merge-option input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary-color);
+    cursor: pointer;
+}
+
 .convert-btn, .reset-btn {
     width: 100%;
     padding: 12px 20px;

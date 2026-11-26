@@ -1,8 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
     const MAX_FILES = 5;
-    const MAX_FILE_SIZE = 15 * 1024 * 1024;
-    const ALLOWED_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png']);
-    const ALLOWED_EXTS = new Set(['.jpg', '.jpeg', '.png']);
+    const MAX_FILE_SIZE = 25 * 1024 * 1024;
+    const ALLOWED_TYPES = new Set([
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'image/webp',
+        'image/gif',
+        'image/bmp'
+    ]);
+    const ALLOWED_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp']);
 
     // Accessible Accordion
     const accordionHeaders = document.querySelectorAll('.accordion-header');
@@ -33,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const stagingCount = document.getElementById('staging-count');
     const stagingList = document.getElementById('staging-list');
     const clearStagingBtn = document.getElementById('clear-staging-btn');
+    const mergeCheckbox = document.getElementById('merge-pdf-checkbox');
     const convertBtn = document.getElementById('convert-btn');
     const progressArea = document.getElementById('progress-area');
     const progressBarWrapper = document.querySelector('.progress-bar');
@@ -42,9 +50,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const convertMoreBtn = document.getElementById('convert-more-btn');
     const previewArea = document.getElementById('preview-area');
 
-    let eventSource = null;
     let toastTimer = null;
     let stagedFiles = [];
+    const activeBlobUrls = new Set();
 
     function showToast(message, type = 'error') {
         if (toastTimer) clearTimeout(toastTimer);
@@ -79,6 +87,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return dotIdx >= 0 ? basename.slice(dotIdx).toLowerCase() : '';
     }
 
+    function revokeAllBlobUrls() {
+        for (const url of activeBlobUrls) {
+            URL.revokeObjectURL(url);
+        }
+        activeBlobUrls.clear();
+    }
+
     fileInput.addEventListener('change', () => {
         handleFileSelection(fileInput.files);
         fileInput.value = '';
@@ -106,10 +121,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     convertBtn.addEventListener('click', () => {
         if (stagedFiles.length > 0) {
-            const filesToUpload = [...stagedFiles];
+            const filesToConvert = [...stagedFiles];
+            const shouldMerge = mergeCheckbox.checked;
             stagedFiles = [];
             renderStaging();
-            handleFiles(filesToUpload);
+            convertInBrowser(filesToConvert, shouldMerge);
         }
     });
 
@@ -129,12 +145,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
             }
             const ext = getExtension(file.name);
-            if (!ALLOWED_TYPES.has(file.type) || !ALLOWED_EXTS.has(ext)) {
-                errors.push(`"${file.name}" skipped (only JPG, JPEG, PNG supported).`);
+            const isValidMime = file.type ? ALLOWED_TYPES.has(file.type) : true;
+            if (!isValidMime || !ALLOWED_EXTS.has(ext)) {
+                errors.push(`"${file.name}" skipped (supported: JPG, PNG, WebP, GIF, BMP).`);
                 continue;
             }
             if (file.size > MAX_FILE_SIZE) {
-                errors.push(`"${file.name}" exceeds the 15 MB limit.`);
+                errors.push(`"${file.name}" exceeds the 25 MB limit.`);
                 continue;
             }
             stagedFiles.push(file);
@@ -190,143 +207,190 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    async function handleFiles(files) {
-        if (eventSource) {
-            eventSource.close();
-            eventSource = null;
+    async function rasterizeToPngBytes(file) {
+        const imgUrl = URL.createObjectURL(file);
+        try {
+            const img = await new Promise((resolve, reject) => {
+                const el = new Image();
+                el.onload = () => resolve(el);
+                el.onerror = () => reject(new Error(`Could not decode "${file.name}".`));
+                el.src = imgUrl;
+            });
+
+            const canvas = document.createElement('canvas');
+            canvas.width = img.naturalWidth || img.width;
+            canvas.height = img.naturalHeight || img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+
+            const pngBlob = await new Promise((resolve, reject) => {
+                canvas.toBlob(
+                    blob => (blob ? resolve(blob) : reject(new Error(`Failed to encode "${file.name}".`))),
+                    'image/png'
+                );
+            });
+            return new Uint8Array(await pngBlob.arrayBuffer());
+        } finally {
+            URL.revokeObjectURL(imgUrl);
+        }
+    }
+
+    async function embedImageInPdf(pdfDoc, file) {
+        const ext = getExtension(file.name);
+        const rawBytes = new Uint8Array(await file.arrayBuffer());
+
+        let embeddedImg;
+        if (file.type === 'image/jpeg' || file.type === 'image/jpg' || ext === '.jpg' || ext === '.jpeg') {
+            try {
+                embeddedImg = await pdfDoc.embedJpg(rawBytes);
+            } catch {
+                const pngBytes = await rasterizeToPngBytes(file);
+                embeddedImg = await pdfDoc.embedPng(pngBytes);
+            }
+        } else if (file.type === 'image/png' || ext === '.png') {
+            try {
+                embeddedImg = await pdfDoc.embedPng(rawBytes);
+            } catch {
+                const pngBytes = await rasterizeToPngBytes(file);
+                embeddedImg = await pdfDoc.embedPng(pngBytes);
+            }
+        } else {
+            const pngBytes = await rasterizeToPngBytes(file);
+            embeddedImg = await pdfDoc.embedPng(pngBytes);
         }
 
+        const page = pdfDoc.addPage([embeddedImg.width, embeddedImg.height]);
+        page.drawImage(embeddedImg, {
+            x: 0,
+            y: 0,
+            width: embeddedImg.width,
+            height: embeddedImg.height
+        });
+    }
+
+    function updateProgress(completed, total, statusMsg) {
+        const percent = Math.round((completed / total) * 100);
+        progressBar.style.width = `${percent}%`;
+        progressBarWrapper.setAttribute('aria-valuenow', String(percent));
+        progressText.textContent = statusMsg;
+    }
+
+    async function convertInBrowser(files, shouldMerge) {
+        if (!window.PDFLib || !window.PDFLib.PDFDocument) {
+            showToast('PDF engine failed to load. Please refresh the page.', 'error');
+            return;
+        }
+
+        revokeAllBlobUrls();
         uploadForm.style.display = 'none';
         progressArea.style.display = 'block';
         convertMoreBtn.style.display = 'none';
-        progressBar.style.width = '0%';
-        progressBarWrapper.setAttribute('aria-valuenow', '0');
-        progressText.textContent = `Uploading ${files.length} file${files.length > 1 ? 's' : ''}...`;
-        currentFileText.textContent = '';
         previewArea.innerHTML = '';
+        updateProgress(0, files.length, `Converting 0 of ${files.length} files in your browser...`);
+        currentFileText.textContent = '';
 
-        const formData = new FormData();
-        for (const file of files) {
-            formData.append('images', file);
-        }
+        const { PDFDocument } = window.PDFLib;
 
         try {
-            const response = await fetch('/upload', { method: 'POST', body: formData });
-            const result = await response.json();
-            if (!response.ok) {
-                throw new Error(result.error || `Server error: ${response.statusText}`);
-            }
-            if (result.jobId) {
-                startStatusListener(result.jobId, files);
+            if (shouldMerge) {
+                const mergedDoc = await PDFDocument.create();
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    currentFileText.textContent = `Processing: ${file.name}`;
+                    await embedImageInPdf(mergedDoc, file);
+                    updateProgress(i + 1, files.length, `Processed ${i + 1} of ${files.length} images...`);
+                }
+
+                const pdfBytes = await mergedDoc.save();
+                const pdfBlob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const pdfUrl = URL.createObjectURL(pdfBlob);
+                activeBlobUrls.add(pdfUrl);
+
+                const mergedName = files.length === 1
+                    ? `${getBaseName(files[0].name)}.pdf`
+                    : 'merged-images.pdf';
+
+                createPreviewCard(files[0], mergedName, pdfUrl, 0, `${files.length} page${files.length > 1 ? 's' : ''} merged`);
             } else {
-                throw new Error('Could not start conversion job.');
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    currentFileText.textContent = `Processing: ${file.name}`;
+                    const pdfDoc = await PDFDocument.create();
+                    await embedImageInPdf(pdfDoc, file);
+
+                    const pdfBytes = await pdfDoc.save();
+                    const pdfBlob = new Blob([pdfBytes], { type: 'application/pdf' });
+                    const pdfUrl = URL.createObjectURL(pdfBlob);
+                    activeBlobUrls.add(pdfUrl);
+
+                    const outputName = `${getBaseName(file.name)}.pdf`;
+                    createPreviewCard(file, outputName, pdfUrl, i * 80);
+                    updateProgress(i + 1, files.length, `Converted ${i + 1} of ${files.length} files...`);
+                }
             }
-        } catch (error) {
-            showToast('Upload failed: ' + error.message, 'error');
+
+            progressText.textContent = 'Conversion Complete!';
+            currentFileText.textContent = '';
+            convertMoreBtn.style.display = 'inline-flex';
+            showToast('All images converted in your browser!', 'success');
+        } catch (err) {
+            showToast(err.message || 'Failed to convert one of the images.', 'error');
             resetUI();
         }
     }
 
-    function startStatusListener(jobId, originalFiles) {
-        eventSource = new EventSource(`/conversion-status/${jobId}`);
-        let processedFilesCount = 0;
+    function createPreviewCard(previewImageFile, pdfDownloadName, pdfBlobUrl, delay, subtitleText = '') {
+        const thumbUrl = URL.createObjectURL(previewImageFile);
+        activeBlobUrls.add(thumbUrl);
 
-        eventSource.onmessage = (event) => {
-            const job = JSON.parse(event.data);
+        const card = document.createElement('div');
+        card.className = 'preview-card';
+        card.style.animationDelay = `${delay}ms`;
 
-            if (job.error) {
-                eventSource.close();
-                eventSource = null;
-                showToast(job.error, 'error');
-                resetUI();
-                return;
-            }
+        const img = document.createElement('img');
+        img.src = thumbUrl;
+        img.alt = `Preview of ${previewImageFile.name}`;
+        img.className = 'preview-image';
 
-            const percentComplete = Math.round((job.completed / job.total) * 100);
-            progressBar.style.width = percentComplete + '%';
-            progressBarWrapper.setAttribute('aria-valuenow', String(percentComplete));
-            progressText.textContent = `Converting ${job.completed} of ${job.total} files...`;
+        const info = document.createElement('div');
+        info.className = 'preview-info';
 
-            if (job.completed > processedFilesCount) {
-                const newFiles = job.files.slice(processedFilesCount);
-                newFiles.forEach((fileData, idx) => {
-                    const fileIndex = processedFilesCount + idx;
-                    const originalFile = originalFiles[fileIndex];
-                    if (originalFile) {
-                        createPreviewCard(originalFile, fileData, fileIndex * 100);
-                        currentFileText.textContent = `Completed: ${originalFile.name}`;
-                    }
-                });
-                processedFilesCount = job.completed;
-            }
+        const fileNameSpan = document.createElement('span');
+        fileNameSpan.className = 'file-name';
+        fileNameSpan.textContent = subtitleText ? `${pdfDownloadName} (${subtitleText})` : pdfDownloadName;
+        fileNameSpan.title = pdfDownloadName;
 
-            if (job.completed === job.total) {
-                eventSource.close();
-                eventSource = null;
-                progressText.textContent = 'Conversion Complete!';
-                currentFileText.textContent = '';
-                convertMoreBtn.style.display = 'inline-flex';
-                showToast('All images converted to PDF!', 'success');
-            }
-        };
+        const actions = document.createElement('div');
+        actions.className = 'action-buttons';
 
-        eventSource.onerror = () => {
-            if (eventSource) {
-                eventSource.close();
-                eventSource = null;
-            }
-            showToast('Connection to server lost.', 'error');
-            resetUI();
-        };
-    }
+        const downloadLink = document.createElement('a');
+        downloadLink.href = pdfBlobUrl;
+        downloadLink.download = pdfDownloadName;
+        downloadLink.className = 'action-btn download-btn';
+        downloadLink.innerHTML = '<i class="fas fa-download" aria-hidden="true"></i> Download PDF';
 
-    function createPreviewCard(imageFile, fileData, delay) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const card = document.createElement('div');
-            card.className = 'preview-card';
-            card.dataset.pdfFile = fileData.pdfFile;
-            card.style.animationDelay = `${delay}ms`;
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'action-btn remove-btn';
+        removeBtn.innerHTML = '<i class="fas fa-trash" aria-hidden="true"></i> Remove';
+        removeBtn.addEventListener('click', () => {
+            URL.revokeObjectURL(pdfBlobUrl);
+            URL.revokeObjectURL(thumbUrl);
+            activeBlobUrls.delete(pdfBlobUrl);
+            activeBlobUrls.delete(thumbUrl);
+            card.style.animation = 'fadeOut 0.3s forwards';
+            setTimeout(() => card.remove(), 300);
+        });
 
-            const img = document.createElement('img');
-            img.src = e.target.result;
-            img.alt = `Preview of ${imageFile.name}`;
-            img.className = 'preview-image';
+        actions.appendChild(downloadLink);
+        actions.appendChild(removeBtn);
 
-            const info = document.createElement('div');
-            info.className = 'preview-info';
+        info.appendChild(fileNameSpan);
+        info.appendChild(actions);
 
-            const fileNameSpan = document.createElement('span');
-            fileNameSpan.className = 'file-name';
-            fileNameSpan.textContent = imageFile.name;
-            fileNameSpan.title = imageFile.name;
-
-            const actions = document.createElement('div');
-            actions.className = 'action-buttons';
-
-            const originalPdfName = `${getBaseName(fileData.originalName)}.pdf`;
-            const downloadLink = document.createElement('a');
-            downloadLink.href = `/download/${encodeURIComponent(fileData.pdfFile)}?name=${encodeURIComponent(originalPdfName)}`;
-            downloadLink.className = 'action-btn download-btn';
-            downloadLink.innerHTML = '<i class="fas fa-download" aria-hidden="true"></i> Download PDF';
-
-            const removeBtn = document.createElement('button');
-            removeBtn.type = 'button';
-            removeBtn.className = 'action-btn remove-btn';
-            removeBtn.innerHTML = '<i class="fas fa-trash" aria-hidden="true"></i> Remove';
-            removeBtn.addEventListener('click', () => handleRemove(card));
-
-            actions.appendChild(downloadLink);
-            actions.appendChild(removeBtn);
-
-            info.appendChild(fileNameSpan);
-            info.appendChild(actions);
-
-            card.appendChild(img);
-            card.appendChild(info);
-            previewArea.appendChild(card);
-        };
-        reader.readAsDataURL(imageFile);
+        card.appendChild(img);
+        card.appendChild(info);
+        previewArea.appendChild(card);
     }
 
     function resetUI() {
@@ -336,20 +400,5 @@ document.addEventListener('DOMContentLoaded', () => {
         progressBar.style.width = '0%';
         progressBarWrapper.setAttribute('aria-valuenow', '0');
         fileInput.value = '';
-    }
-
-    async function handleRemove(card) {
-        const pdfFile = card.dataset.pdfFile;
-        try {
-            await fetch('/remove', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ filename: pdfFile })
-            });
-        } catch {
-            // Best-effort server cleanup; still remove card from UI
-        }
-        card.style.animation = 'fadeOut 0.3s forwards';
-        setTimeout(() => card.remove(), 300);
     }
 });
