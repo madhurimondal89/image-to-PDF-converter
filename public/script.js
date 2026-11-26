@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const stagingCount = document.getElementById('staging-count');
     const stagingList = document.getElementById('staging-list');
     const clearStagingBtn = document.getElementById('clear-staging-btn');
+    const pageSizeSelect = document.getElementById('page-size-select');
     const mergeCheckbox = document.getElementById('merge-pdf-checkbox');
     const convertBtn = document.getElementById('convert-btn');
     const progressArea = document.getElementById('progress-area');
@@ -48,10 +49,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const progressText = document.getElementById('progress-text');
     const currentFileText = document.getElementById('current-file-text');
     const convertMoreBtn = document.getElementById('convert-more-btn');
+    const batchActions = document.getElementById('batch-actions');
+    const downloadZipBtn = document.getElementById('download-zip-btn');
     const previewArea = document.getElementById('preview-area');
 
     let toastTimer = null;
     let stagedFiles = [];
+    let generatedPdfs = [];
     const activeBlobUrls = new Set();
 
     function showToast(message, type = 'error') {
@@ -94,6 +98,95 @@ document.addEventListener('DOMContentLoaded', () => {
         activeBlobUrls.clear();
     }
 
+    // Minimal zero-dependency Store ZIP builder for client-side batch download
+    const CRC32_TABLE = (() => {
+        const table = new Uint32Array(256);
+        for (let i = 0; i < 256; i++) {
+            let c = i;
+            for (let k = 0; k < 8; k++) {
+                c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+            }
+            table[i] = c >>> 0;
+        }
+        return table;
+    })();
+
+    function crc32(bytes) {
+        let crc = 0xffffffff;
+        for (let i = 0; i < bytes.length; i++) {
+            crc = CRC32_TABLE[(crc ^ bytes[i]) & 0xff] ^ (crc >>> 8);
+        }
+        return (crc ^ 0xffffffff) >>> 0;
+    }
+
+    function createZipBlob(entries) {
+        const encoder = new TextEncoder();
+        const localParts = [];
+        const centralParts = [];
+        let offset = 0;
+
+        for (const entry of entries) {
+            const nameBytes = encoder.encode(entry.name);
+            const data = entry.bytes;
+            const crc = crc32(data);
+
+            const localHeader = new ArrayBuffer(30);
+            const lv = new DataView(localHeader);
+            lv.setUint32(0, 0x04034b50, true);
+            lv.setUint16(4, 20, true);
+            lv.setUint16(6, 0x0800, true); // UTF-8 flag
+            lv.setUint16(8, 0, true); // Store (no compression)
+            lv.setUint16(10, 0, true);
+            lv.setUint16(12, 0, true);
+            lv.setUint32(14, crc, true);
+            lv.setUint32(18, data.length, true);
+            lv.setUint32(22, data.length, true);
+            lv.setUint16(26, nameBytes.length, true);
+            lv.setUint16(28, 0, true);
+
+            localParts.push(new Uint8Array(localHeader), nameBytes, data);
+
+            const centralHeader = new ArrayBuffer(46);
+            const cv = new DataView(centralHeader);
+            cv.setUint32(0, 0x02014b50, true);
+            cv.setUint16(4, 20, true);
+            cv.setUint16(6, 20, true);
+            cv.setUint16(8, 0x0800, true);
+            cv.setUint16(10, 0, true);
+            cv.setUint16(12, 0, true);
+            cv.setUint16(14, 0, true);
+            cv.setUint32(16, crc, true);
+            cv.setUint32(20, data.length, true);
+            cv.setUint32(24, data.length, true);
+            cv.setUint16(28, nameBytes.length, true);
+            cv.setUint16(30, 0, true);
+            cv.setUint16(32, 0, true);
+            cv.setUint16(34, 0, true);
+            cv.setUint16(36, 0, true);
+            cv.setUint32(38, 0, true);
+            cv.setUint32(42, offset, true);
+
+            centralParts.push(new Uint8Array(centralHeader), nameBytes);
+            offset += 30 + nameBytes.length + data.length;
+        }
+
+        const centralSize = centralParts.reduce((sum, part) => sum + part.length, 0);
+        const eocd = new ArrayBuffer(22);
+        const ev = new DataView(eocd);
+        ev.setUint32(0, 0x06054b50, true);
+        ev.setUint16(4, 0, true);
+        ev.setUint16(6, 0, true);
+        ev.setUint16(8, entries.length, true);
+        ev.setUint16(10, entries.length, true);
+        ev.setUint32(12, centralSize, true);
+        ev.setUint32(16, offset, true);
+        ev.setUint16(20, 0, true);
+
+        return new Blob([...localParts, ...centralParts, new Uint8Array(eocd)], {
+            type: 'application/zip'
+        });
+    }
+
     fileInput.addEventListener('change', () => {
         handleFileSelection(fileInput.files);
         fileInput.value = '';
@@ -123,10 +216,34 @@ document.addEventListener('DOMContentLoaded', () => {
         if (stagedFiles.length > 0) {
             const filesToConvert = [...stagedFiles];
             const shouldMerge = mergeCheckbox.checked;
+            const pageSizeMode = pageSizeSelect.value;
             stagedFiles = [];
             renderStaging();
-            convertInBrowser(filesToConvert, shouldMerge);
+            convertInBrowser(filesToConvert, shouldMerge, pageSizeMode);
         }
+    });
+
+    downloadZipBtn.addEventListener('click', () => {
+        if (generatedPdfs.length < 2) return;
+        const usedNames = new Map();
+        const entries = generatedPdfs.map(item => {
+            const count = (usedNames.get(item.name) || 0) + 1;
+            usedNames.set(item.name, count);
+            const finalName = count === 1
+                ? item.name
+                : `${getBaseName(item.name)} (${count}).pdf`;
+            return { name: finalName, bytes: item.bytes };
+        });
+
+        const zipBlob = createZipBlob(entries);
+        const zipUrl = URL.createObjectURL(zipBlob);
+        const a = document.createElement('a');
+        a.href = zipUrl;
+        a.download = 'converted-pdfs.zip';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(zipUrl), 5000);
     });
 
     convertMoreBtn.addEventListener('click', () => {
@@ -235,7 +352,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function embedImageInPdf(pdfDoc, file) {
+    function computePageLayout(imgWidth, imgHeight, pageSizeMode) {
+        if (pageSizeMode === 'fit') {
+            return { pageW: imgWidth, pageH: imgHeight, x: 0, y: 0, drawW: imgWidth, drawH: imgHeight };
+        }
+
+        const base = pageSizeMode === 'letter' ? [612, 792] : [595.28, 841.89];
+        const isLandscape = imgWidth > imgHeight;
+        const pageW = isLandscape ? base[1] : base[0];
+        const pageH = isLandscape ? base[0] : base[1];
+        const margin = 20;
+        const maxW = pageW - margin * 2;
+        const maxH = pageH - margin * 2;
+        const scale = Math.min(maxW / imgWidth, maxH / imgHeight);
+        const drawW = imgWidth * scale;
+        const drawH = imgHeight * scale;
+        const x = (pageW - drawW) / 2;
+        const y = (pageH - drawH) / 2;
+
+        return { pageW, pageH, x, y, drawW, drawH };
+    }
+
+    async function embedImageInPdf(pdfDoc, file, pageSizeMode) {
         const ext = getExtension(file.name);
         const rawBytes = new Uint8Array(await file.arrayBuffer());
 
@@ -259,13 +397,13 @@ document.addEventListener('DOMContentLoaded', () => {
             embeddedImg = await pdfDoc.embedPng(pngBytes);
         }
 
-        const page = pdfDoc.addPage([embeddedImg.width, embeddedImg.height]);
-        page.drawImage(embeddedImg, {
-            x: 0,
-            y: 0,
-            width: embeddedImg.width,
-            height: embeddedImg.height
-        });
+        const { pageW, pageH, x, y, drawW, drawH } = computePageLayout(
+            embeddedImg.width,
+            embeddedImg.height,
+            pageSizeMode
+        );
+        const page = pdfDoc.addPage([pageW, pageH]);
+        page.drawImage(embeddedImg, { x, y, width: drawW, height: drawH });
     }
 
     function updateProgress(completed, total, statusMsg) {
@@ -275,13 +413,15 @@ document.addEventListener('DOMContentLoaded', () => {
         progressText.textContent = statusMsg;
     }
 
-    async function convertInBrowser(files, shouldMerge) {
+    async function convertInBrowser(files, shouldMerge, pageSizeMode) {
         if (!window.PDFLib || !window.PDFLib.PDFDocument) {
             showToast('PDF engine failed to load. Please refresh the page.', 'error');
             return;
         }
 
         revokeAllBlobUrls();
+        generatedPdfs = [];
+        batchActions.style.display = 'none';
         uploadForm.style.display = 'none';
         progressArea.style.display = 'block';
         convertMoreBtn.style.display = 'none';
@@ -297,11 +437,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 for (let i = 0; i < files.length; i++) {
                     const file = files[i];
                     currentFileText.textContent = `Processing: ${file.name}`;
-                    await embedImageInPdf(mergedDoc, file);
+                    await embedImageInPdf(mergedDoc, file, pageSizeMode);
                     updateProgress(i + 1, files.length, `Processed ${i + 1} of ${files.length} images...`);
                 }
 
-                const pdfBytes = await mergedDoc.save();
+                const pdfBytes = new Uint8Array(await mergedDoc.save());
                 const pdfBlob = new Blob([pdfBytes], { type: 'application/pdf' });
                 const pdfUrl = URL.createObjectURL(pdfBlob);
                 activeBlobUrls.add(pdfUrl);
@@ -310,22 +450,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     ? `${getBaseName(files[0].name)}.pdf`
                     : 'merged-images.pdf';
 
+                generatedPdfs.push({ name: mergedName, bytes: pdfBytes });
                 createPreviewCard(files[0], mergedName, pdfUrl, 0, `${files.length} page${files.length > 1 ? 's' : ''} merged`);
             } else {
                 for (let i = 0; i < files.length; i++) {
                     const file = files[i];
                     currentFileText.textContent = `Processing: ${file.name}`;
                     const pdfDoc = await PDFDocument.create();
-                    await embedImageInPdf(pdfDoc, file);
+                    await embedImageInPdf(pdfDoc, file, pageSizeMode);
 
-                    const pdfBytes = await pdfDoc.save();
+                    const pdfBytes = new Uint8Array(await pdfDoc.save());
                     const pdfBlob = new Blob([pdfBytes], { type: 'application/pdf' });
                     const pdfUrl = URL.createObjectURL(pdfBlob);
                     activeBlobUrls.add(pdfUrl);
 
                     const outputName = `${getBaseName(file.name)}.pdf`;
+                    generatedPdfs.push({ name: outputName, bytes: pdfBytes });
                     createPreviewCard(file, outputName, pdfUrl, i * 80);
                     updateProgress(i + 1, files.length, `Converted ${i + 1} of ${files.length} files...`);
+                }
+
+                if (generatedPdfs.length > 1) {
+                    batchActions.style.display = 'flex';
                 }
             }
 
@@ -378,6 +524,10 @@ document.addEventListener('DOMContentLoaded', () => {
             URL.revokeObjectURL(thumbUrl);
             activeBlobUrls.delete(pdfBlobUrl);
             activeBlobUrls.delete(thumbUrl);
+            generatedPdfs = generatedPdfs.filter(item => item.name !== pdfDownloadName);
+            if (generatedPdfs.length < 2) {
+                batchActions.style.display = 'none';
+            }
             card.style.animation = 'fadeOut 0.3s forwards';
             setTimeout(() => card.remove(), 300);
         });

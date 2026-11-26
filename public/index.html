@@ -5,7 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image to PDF Converter - Free & Easy Online Tool</title>
     <meta name="description" content="Easily convert your images (JPG, PNG, WebP, GIF, BMP) to high-quality PDF files for free right in your browser. Fast, 100% private, no server uploads!">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <meta name="theme-color" content="#6a11cb">
+    <link rel="canonical" href="https://image-to-pdf.imagecompress.in/">
+
+    <!-- Open Graph / Social Sharing -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="ImageCompress.in">
+    <meta property="og:url" content="https://image-to-pdf.imagecompress.in/">
+    <meta property="og:title" content="Image to PDF Converter - Free, Fast &amp; 100% Private">
+    <meta property="og:description" content="Convert JPG, PNG, WebP, GIF, and BMP images to PDF directly in your browser. Merge multiple images into one PDF with zero server uploads.">
+    <meta property="og:image" content="https://image-to-pdf.imagecompress.in/icon.png">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Image to PDF Converter - Free &amp; 100% Private">
+    <meta name="twitter:description" content="Convert JPG, PNG, WebP, GIF, and BMP images to PDF directly in your browser. No server uploads required.">
+    <meta name="twitter:image" content="https://image-to-pdf.imagecompress.in/icon.png">
 
     <!-- Favicon & Manifest -->
     <link rel="icon" type="image/png" href="/icon.png">
@@ -27,6 +43,8 @@
       "description": "A free online tool to convert JPG, PNG, WebP, GIF, and BMP images to PDF documents directly in your browser with complete privacy.",
       "applicationCategory": "BusinessApplication",
       "operatingSystem": "All",
+      "browserRequirements": "Requires JavaScript. Runs locally in modern browsers.",
+      "isAccessibleForFree": true,
       "offers": {
         "@type": "Offer",
         "price": "0",
@@ -167,10 +185,20 @@
                     <button type="button" id="clear-staging-btn" class="text-btn">Clear All</button>
                 </div>
                 <ul id="staging-list" class="staging-list"></ul>
-                <label class="merge-option">
-                    <input type="checkbox" id="merge-pdf-checkbox">
-                    <span>Merge all selected images into a single PDF</span>
-                </label>
+                <div class="conversion-options">
+                    <label class="option-group" for="page-size-select">
+                        <span>Page Size:</span>
+                        <select id="page-size-select" class="page-size-select">
+                            <option value="fit">Fit to Image (Original)</option>
+                            <option value="a4">A4 (Auto Orientation)</option>
+                            <option value="letter">US Letter (Auto Orientation)</option>
+                        </select>
+                    </label>
+                    <label class="merge-option">
+                        <input type="checkbox" id="merge-pdf-checkbox">
+                        <span>Merge all into a single PDF</span>
+                    </label>
+                </div>
                 <button type="button" id="convert-btn" class="convert-btn">
                     <i class="fas fa-file-pdf" aria-hidden="true"></i> Convert to PDF
                 </button>
@@ -185,6 +213,12 @@
                 <p id="current-file-text"></p>
                 <button type="button" id="convert-more-btn" class="reset-btn" style="display: none;">
                     <i class="fas fa-plus" aria-hidden="true"></i> Convert More Images
+                </button>
+            </div>
+
+            <div id="batch-actions" class="batch-actions" style="display: none;">
+                <button type="button" id="download-zip-btn" class="zip-btn">
+                    <i class="fas fa-file-archive" aria-hidden="true"></i> Download All as ZIP
                 </button>
             </div>
 

@@ -1,21 +1,29 @@
-# Allow all crawlers that respect robots.txt
+# Allow search engines and AI answer engines to index the tool
 User-agent: *
-
-# Allow access to the entire site by default
 Allow: /
 
-# Disallow crawlers from accessing temporary file directories and functional endpoints
-# This is very important for privacy and to prevent indexing of temporary user files.
-Disallow: /uploads/
-Disallow: /output/
-Disallow: /zips/
+User-agent: Googlebot
+Allow: /
 
-# Disallow access to functional API routes that don't have content for users
-Disallow: /upload
-Disallow: /conversion-status/
-Disallow: /remove
-Disallow: /download/
-Disallow: /download-zip/
+User-agent: Google-Extended
+Allow: /
 
-# Point search engines to the location of your sitemap
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+# Disallow internal vendor bundle if not needed for indexing
+Disallow: /vendor/
+
 Sitemap: https://image-to-pdf.imagecompress.in/sitemap.xml
