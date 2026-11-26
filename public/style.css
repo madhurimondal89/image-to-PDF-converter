@@ -104,7 +104,8 @@ h1 {
     letter-spacing: var(--tracking-display);
     line-height: 1.06;
     color: var(--color-ink);
-    margin-bottom: var(--space-xs);
+    max-width: none;
+    margin: 0 auto var(--space-xs);
     overflow-wrap: break-word;
     min-width: 0;
 }
