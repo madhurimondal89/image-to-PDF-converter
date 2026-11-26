@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image to PDF Converter - Free & Easy Online Tool</title>
-    <meta name="description" content="Easily convert your images (JPG, PNG, etc.) to high-quality PDF files for free. Our online tool is fast, secure, and requires no registration. Convert and download your PDF in seconds!">
-    
-    <!-- Favicon -->
+    <meta name="description" content="Easily convert your images (JPG, JPEG, PNG) to high-quality PDF files for free. Our online tool is fast, secure, and requires no registration. Convert and download your PDF in seconds!">
+    <meta name="theme-color" content="#6a11cb">
+
+    <!-- Favicon & Manifest -->
     <link rel="icon" type="image/png" href="/icon.png">
+    <link rel="manifest" href="/site.webmanifest">
 
     <!-- ===== AdSense Script ===== -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8732458645979427"
@@ -15,14 +17,14 @@
 
     <!-- ===== Structured Data (Schema.org) ===== -->
 
-    <!-- 1. WebApplication Schema (টুলের জন্য) -->
+    <!-- 1. WebApplication Schema -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebApplication",
       "name": "Image to PDF Converter",
       "url": "https://image-to-pdf.imagecompress.in/",
-      "description": "A free online tool to convert JPG, PNG, and other image formats to PDF documents easily and securely.",
+      "description": "A free online tool to convert JPG, JPEG, and PNG images to PDF documents easily and securely.",
       "applicationCategory": "BusinessApplication",
       "operatingSystem": "All",
       "offers": {
@@ -30,7 +32,7 @@
         "price": "0",
         "priceCurrency": "USD"
       },
-      "featureList": "Convert JPG to PDF, Convert PNG to PDF, Merge Images to PDF, Secure Conversion",
+      "featureList": "Convert JPG to PDF, Convert PNG to PDF, Batch Image Conversion, Secure Conversion",
       "author": {
         "@type": "Organization",
         "name": "ImageCompress.in",
@@ -39,7 +41,7 @@
     }
     </script>
 
-    <!-- 2. HowTo Schema (ব্যবহারবিধির জন্য) -->
+    <!-- 2. HowTo Schema -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -49,12 +51,12 @@
       "step": [{
         "@type": "HowToStep",
         "name": "Step 1: Upload Your Image",
-        "text": "Click the upload area or drag and drop your image files (like JPG, PNG) into the box. You can select up to 5 images at a time.",
+        "text": "Click the upload area or drag and drop your image files (JPG, JPEG, PNG) into the box. You can select up to 5 images at a time.",
         "url": "https://image-to-pdf.imagecompress.in/#upload-form"
       },{
         "@type": "HowToStep",
-        "name": "Step 2: Automatic Conversion",
-        "text": "Our tool instantly begins to convert your image to PDF format as soon as the upload is complete, ensuring high quality."
+        "name": "Step 2: Convert to PDF",
+        "text": "Review your selected images and click Convert to PDF to generate high-quality PDF documents."
       },{
         "@type": "HowToStep",
         "name": "Step 3: Download Your PDF",
@@ -64,7 +66,7 @@
     }
     </script>
 
-    <!-- 3. FAQPage Schema (প্রশ্নোত্তরের জন্য) -->
+    <!-- 3. FAQPage Schema -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -81,14 +83,14 @@
         "name": "What image formats are supported?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "We support all major image formats, including JPG, JPEG, PNG, GIF, BMP, and TIFF. You can upload any of these to easily convert photo to PDF."
+          "text": "We support JPG, JPEG, and PNG image formats up to 15 MB per file."
         }
       },{
         "@type": "Question",
         "name": "Are my uploaded files safe and private?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Absolutely. Your privacy is our priority. We use secure connections, and all uploaded files are permanently deleted from our servers after 30 minutes."
+          "text": "Absolutely. Your privacy is our priority. Original uploaded images are deleted immediately after conversion, and generated PDFs are automatically removed after 30 minutes."
         }
       }]
     }
@@ -130,9 +132,9 @@
     <header class="site-header">
         <div class="header-container">
             <a href="/" class="logo-link">
-                <img src="logo.png" alt="Site Logo" class="header-logo">
+                <img src="logo.png" alt="ImageCompress.in Logo" class="header-logo">
             </a>
-            <nav class="main-nav">
+            <nav class="main-nav" aria-label="Main Navigation">
                 <ul>
                     <li><a href="https://www.imagecompress.in/" target="_blank" rel="noopener noreferrer">Home</a></li>
                 </ul>
@@ -144,20 +146,42 @@
     <main>
         <div class="converter-container">
             <h1>Image to PDF Converter</h1>
-            <p class="subtitle">Upload your images and get high-quality PDFs instantly.</p>
+            <p class="subtitle">Upload your JPG or PNG images and get high-quality PDFs instantly.</p>
+
+            <!-- Inline Notification Toast -->
+            <div id="status-toast" class="status-toast" role="alert" aria-live="assertive" style="display: none;"></div>
+
             <form id="upload-form">
                 <label for="file-upload-input" class="file-upload-wrapper">
-                    <img src="upload.png" alt="Upload Icon" class="upload-area-icon"/>
+                    <img src="upload.png" alt="" aria-hidden="true" class="upload-area-icon"/>
                     <p><strong>Click to browse</strong> or drag and drop your files here</p>
-                    <p class="upload-limit">You can select a maximum of 5 files at a time.</p>
+                    <p class="upload-limit">JPG, JPEG, PNG &bull; Max 5 files &bull; Up to 15 MB each</p>
+                    <input type="file" name="images" id="file-upload-input" class="sr-only" accept=".jpg,.jpeg,.png,image/jpeg,image/png" multiple>
                 </label>
-                <input type="file" name="images" id="file-upload-input" accept="image/*" multiple>
             </form>
-            
-            <div id="progress-area" style="display: none;">
+
+            <!-- Staged Files Queue -->
+            <div id="staging-area" class="staging-area" style="display: none;">
+                <div class="staging-header">
+                    <span id="staging-count">0 files selected</span>
+                    <button type="button" id="clear-staging-btn" class="text-btn">Clear All</button>
+                </div>
+                <ul id="staging-list" class="staging-list"></ul>
+                <button type="button" id="convert-btn" class="convert-btn">
+                    <i class="fas fa-file-pdf"></i> Convert to PDF
+                </button>
+            </div>
+
+            <!-- Progress Area -->
+            <div id="progress-area" aria-live="polite" style="display: none;">
                 <p id="progress-text">Starting conversion...</p>
-                <div class="progress-bar"><div class="progress" id="progress"></div></div>
+                <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                    <div class="progress" id="progress"></div>
+                </div>
                 <p id="current-file-text"></p>
+                <button type="button" id="convert-more-btn" class="reset-btn" style="display: none;">
+                    <i class="fas fa-plus"></i> Convert More Images
+                </button>
             </div>
 
             <div class="preview-area" id="preview-area"></div>
@@ -166,14 +190,16 @@
         <!-- SEO Content Section (Accordion) -->
         <section class="content-section">
             <div class="accordion">
-                
+
                 <!-- How To -->
                 <div class="accordion-item">
-                    <button class="accordion-header">How to Convert Image to PDF<i class="fas fa-chevron-down"></i></button>
-                    <div class="accordion-content">
+                    <button type="button" class="accordion-header" aria-expanded="false" aria-controls="acc-howto">
+                        How to Convert Image to PDF<i class="fas fa-chevron-down" aria-hidden="true"></i>
+                    </button>
+                    <div id="acc-howto" class="accordion-content">
                         <ol class="how-to-list">
-                            <li><strong>Upload Your Image:</strong> Click the upload area or drag and drop your image files into the box. You can upload up to 5 images at once.</li>
-                            <li><strong>Instant Conversion:</strong> Our tool automatically starts converting your images to high-quality PDF files.</li>
+                            <li><strong>Upload Your Image:</strong> Click the upload area or drag and drop your JPG/PNG files into the box. You can upload up to 5 images at once.</li>
+                            <li><strong>Review &amp; Convert:</strong> Remove any unwanted file from the queue, then click "Convert to PDF".</li>
                             <li><strong>Download Your PDF:</strong> A preview will appear. Click "Download PDF" next to each image to save your file.</li>
                         </ol>
                     </div>
@@ -181,40 +207,46 @@
 
                 <!-- Features -->
                 <div class="accordion-item">
-                    <button class="accordion-header">Why Choose Our Online PDF Converter?<i class="fas fa-chevron-down"></i></button>
-                    <div class="accordion-content">
+                    <button type="button" class="accordion-header" aria-expanded="false" aria-controls="acc-features">
+                        Why Choose Our Online PDF Converter?<i class="fas fa-chevron-down" aria-hidden="true"></i>
+                    </button>
+                    <div id="acc-features" class="accordion-content">
                         <div class="features-grid">
-                            <div class="feature-item"><i class="fas fa-bolt"></i><h3>Lightning Fast</h3><p>Our servers convert your images to PDF in seconds, saving you time.</p></div>
-                            <div class="feature-item"><i class="fas fa-lock"></i><h3>Secure & Private</h3><p>All uploaded files are automatically deleted from our servers after 30 minutes.</p></div>
-                            <div class="feature-item"><i class="fas fa-gem"></i><h3>High-Quality Output</h3><p>Your PDF will retain the original quality and resolution of your images.</p></div>
-                            <div class="feature-item"><i class="fas fa-mobile-alt"></i><h3>Mobile Friendly</h3><p>Our tool is fully responsive and works perfectly on any device, including smartphones.</p></div>
+                            <div class="feature-item"><i class="fas fa-bolt" aria-hidden="true"></i><h3>Lightning Fast</h3><p>Our servers convert your images to PDF in seconds, saving you time.</p></div>
+                            <div class="feature-item"><i class="fas fa-lock" aria-hidden="true"></i><h3>Secure &amp; Private</h3><p>Uploaded images are deleted immediately after conversion, and PDFs expire after 30 minutes.</p></div>
+                            <div class="feature-item"><i class="fas fa-gem" aria-hidden="true"></i><h3>High-Quality Output</h3><p>Your PDF will retain the original quality and resolution of your images.</p></div>
+                            <div class="feature-item"><i class="fas fa-mobile-alt" aria-hidden="true"></i><h3>Mobile Friendly</h3><p>Our tool is fully responsive and works perfectly on any device, including smartphones.</p></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- FAQ -->
                 <div class="accordion-item">
-                    <button class="accordion-header">Frequently Asked Questions (FAQ)<i class="fas fa-chevron-down"></i></button>
-                    <div class="accordion-content">
+                    <button type="button" class="accordion-header" aria-expanded="false" aria-controls="acc-faq">
+                        Frequently Asked Questions (FAQ)<i class="fas fa-chevron-down" aria-hidden="true"></i>
+                    </button>
+                    <div id="acc-faq" class="accordion-content">
                         <div class="faq-section">
                             <div class="faq-item"><h3>Is this image to PDF converter free to use?</h3><p>Yes, our online tool is 100% free for everyone. There are no hidden costs, subscription fees, or limits on the number of conversions.</p></div>
-                            <div class="faq-item"><h3>What image formats are supported?</h3><p>We support all major image formats, including JPG, JPEG, PNG, GIF, BMP, and TIFF. You can upload any of these to easily convert photo to PDF.</p></div>
-                            <div class="faq-item"><h3>Are my uploaded files safe and private?</h3><p>Absolutely. Your privacy is our priority. We use secure connections, and all uploaded files are permanently deleted from our servers after 30 minutes.</p></div>
+                            <div class="faq-item"><h3>What image formats are supported?</h3><p>We support JPG, JPEG, and PNG image formats (up to 15 MB per file) for crisp, lossless PDF conversion.</p></div>
+                            <div class="faq-item"><h3>Are my uploaded files safe and private?</h3><p>Absolutely. Your privacy is our priority. Uploaded images are deleted immediately after conversion, and generated PDFs are permanently removed after 30 minutes.</p></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- SEO Article -->
                 <div class="accordion-item">
-                    <button class="accordion-header">A Guide to Image to PDF Conversion<i class="fas fa-chevron-down"></i></button>
-                    <div class="accordion-content">
+                    <button type="button" class="accordion-header" aria-expanded="false" aria-controls="acc-guide">
+                        A Guide to Image to PDF Conversion<i class="fas fa-chevron-down" aria-hidden="true"></i>
+                    </button>
+                    <div id="acc-guide" class="accordion-content">
                         <div class="seo-article">
                             <h3>The Importance of Converting Images to PDF</h3>
                             <p>In our digital age, images are everywhere. From scanned documents and receipts to precious family photos, we manage countless visual files. However, sharing or archiving these images can be challenging. This is where the need to <strong>convert image to PDF</strong> becomes essential. A PDF (Portable Document Format) file acts as a universal container, preserving the look and feel of your original file, regardless of the device it's viewed on.</p>
                             <h3>When Should You Convert a Photo to PDF?</h3>
                             <p>There are numerous scenarios where converting a <strong>photo to PDF</strong> is the best solution. For professionals, submitting a resume with a headshot or creating a portfolio requires a polished, single-file format. For students, turning pictures of lecture notes or textbook pages into a PDF makes studying and sharing much easier. By using a reliable tool, you can effortlessly turn any <strong>picture to PDF</strong>, ensuring your documents are organized and easy to handle.</p>
                             <h3>Seamlessly Convert JPG to PDF</h3>
-                            <p>JPG is the most common image format, especially for photographs. Often, you'll find the need to <strong>convert JPG to PDF</strong> to maintain consistency in your documents. Whether you are compiling a report, creating an e-book, or simply archiving images, our tool makes this process seamless. The process to <strong>convert photo to pdf</strong> is the same for JPGs as it is for other formats like PNG, ensuring a hassle-free experience every time.</p>
+                            <p>JPG is the most common image format, especially for photographs. Often, you'll find the need to <strong>convert JPG to PDF</strong> to maintain consistency in your documents. Whether you are compiling a report, creating an e-book, or simply archiving images, our tool makes this process seamless. The process to <strong>convert photo to pdf</strong> is the same for JPGs as it is for PNGs, ensuring a hassle-free experience every time.</p>
                             <h3>Why Our Tool is Your Best Choice</h3>
                             <p>Our free online tool is designed to be the simplest and most efficient solution for all your conversion needs. It's the perfect way to turn any <strong>image to PDF</strong> without compromising on quality or security. Give it a try and see how easy managing your digital documents can be!</p>
                         </div>
@@ -236,7 +268,7 @@
                 <li><a href="https://www.imagecompress.in/privacy-policy/" target="_blank" rel="noopener noreferrer">Privacy Policy</a></li>
                 <li><a href="https://www.imagecompress.in/terms-and-conditions/" target="_blank" rel="noopener noreferrer">Terms and Conditions</a></li>
             </ul>
-            <p class="copyright-text">&copy; 2025 imagecompress.in All Rights Reserved.</p>
+            <p class="copyright-text">&copy; 2026 imagecompress.in All Rights Reserved.</p>
         </div>
     </footer>
 
